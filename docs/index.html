@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>readable-regex — Fluent Regex Builder for Python</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface-hover: #222633;
+      --border: #2a2e3d;
+      --text: #e1e4ed;
+      --text-muted: #8b90a0;
+      --accent: #7c6aef;
+      --accent-light: #9d8ff2;
+      --green: #34d399;
+      --orange: #f59e0b;
+      --pink: #f472b6;
+      --blue: #60a5fa;
+      --cyan: #22d3ee;
+      --red: #f87171;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 0 1.5rem;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 4rem 0 6rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    header h1 {
+      font-size: 2.75rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+    }
+
+    header h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1.15rem;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    .vocab {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 3.5rem;
+    }
+
+    .vocab-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .vocab-card h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .vocab-card table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .vocab-card th {
+      text-align: left;
+      font-weight: 600;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .vocab-card td {
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .vocab-card tr:last-child td { border-bottom: none; }
+
+    section.example {
+      margin-bottom: 2.5rem;
+    }
+
+    .example-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .example-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .example-header h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .example-desc {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      margin-bottom: 1rem;
+      padding-left: 2.65rem;
+    }
+
+    .code-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .code-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.25rem;
+      background: var(--surface-hover);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .code-label .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    pre {
+      padding: 1.25rem;
+      overflow-x: auto;
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+    }
+
+    .code-block code {
+      display: block;
+    }
+
+    .k { color: var(--accent-light); }   /* keyword */
+    .f { color: var(--blue); }            /* function/method */
+    .s { color: var(--green); }           /* string */
+    .c { color: var(--text-muted); font-style: italic; }  /* comment */
+    .n { color: var(--orange); }          /* number */
+    .r { color: var(--pink); }            /* regex output */
+    .v { color: var(--cyan); }            /* variable */
+    .o { color: var(--text-muted); }      /* operator */
+    .p { color: var(--text); }            /* punctuation */
+
+    .output-block {
+      background: #141720;
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+      padding: 1rem 1.25rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .output-block .label {
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.35rem;
+    }
+
+    .output-block .val { color: var(--green); }
+    .output-block .bool-true { color: var(--green); }
+    .output-block .bool-false { color: var(--red); }
+
+    .install-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.5rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.9rem;
+      text-align: center;
+      margin-bottom: 3.5rem;
+      color: var(--text-muted);
+    }
+
+    .install-bar span { color: var(--green); }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    .comparison {
+      margin-bottom: 3.5rem;
+    }
+
+    .comparison h2 {
+      text-align: center;
+      font-size: 1.3rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .comparison .code-block { height: 100%; }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 700px) {
+      .vocab, .two-col { grid-template-columns: 1fr; }
+      header h1 { font-size: 2rem; }
+      .example-desc { padding-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header>
+      <h1><span>readable-regex</span></h1>
+      <p>A fluent, chainable Python API for building regular expressions that read like English.</p>
+    </header>
+
+    <div class="install-bar">
+      <span>$</span> pip install readable-regex
+    </div>
+
+    <!-- Vocabulary -->
+    <div class="vocab">
+      <div class="vocab-card">
+        <h3>Items &mdash; what you match</h3>
+        <table>
+          <tr><th>Singular</th><th>Plural (1+)</th><th>Regex</th></tr>
+          <tr><td><code class="f">digit</code></td><td><code class="f">digits</code></td><td><code class="r">\d</code> / <code class="r">\d+</code></td></tr>
+          <tr><td><code class="f">word</code></td><td><code class="f">words</code></td><td><code class="r">\w</code> / <code class="r">\w+</code></td></tr>
+          <tr><td><code class="f">letter</code></td><td><code class="f">letters</code></td><td><code class="r">[a-zA-Z]</code> / <code class="r">[a-zA-Z]+</code></td></tr>
+          <tr><td><code class="f">whitespace</code></td><td><code class="f">whitespaces</code></td><td><code class="r">\s</code> / <code class="r">\s+</code></td></tr>
+          <tr><td><code class="f">any_char</code></td><td><code class="f">any_chars</code></td><td><code class="r">.</code> / <code class="r">.+</code></td></tr>
+          <tr><td colspan="2"><code class="f">then</code>(<code class="s">'text'</code>)</td><td>escaped literal</td></tr>
+          <tr><td colspan="2"><code class="f">any_of</code>(<code class="s">'a'</code>, <code class="s">'b'</code>)</td><td><code class="r">[ab]</code></td></tr>
+        </table>
+      </div>
+      <div class="vocab-card">
+        <h3>Modifiers &mdash; how you constrain</h3>
+        <table>
+          <tr><th>Modifier</th><th>Effect</th></tr>
+          <tr><td><code class="f">exactly</code>(<code class="n">3</code>)</td><td><code class="r">\d{3}</code></td></tr>
+          <tr><td><code class="f">between</code>(<code class="n">1</code>, <code class="n">3</code>)</td><td><code class="r">\d{1,3}</code></td></tr>
+          <tr><td><code class="f">optional</code></td><td><code class="r">\d?</code></td></tr>
+          <tr><td><code class="f">zero_or_more</code></td><td><code class="r">\d*</code></td></tr>
+          <tr><td><code class="f">starts_with</code> / <code class="f">ends_with</code></td><td><code class="r">^</code> / <code class="r">$</code></td></tr>
+          <tr><td><code class="f">ignore_case</code></td><td>case-insensitive</td></tr>
+          <tr><td><code class="f">exclude</code>.<code class="f">digits</code></td><td><code class="r">\D+</code></td></tr>
+          <tr><td><code class="f">capture</code>(builder)</td><td><code class="r">(...)</code></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Comparison -->
+    <div class="comparison">
+      <h2>Raw regex vs readable-regex</h2>
+      <div class="two-col">
+        <div class="code-block">
+          <div class="code-label"><div class="dot" style="background: var(--red)"></div> Raw regex</div>
+          <pre><code><span class="k">import</span> re
+re<span class="p">.</span><span class="f">compile</span><span class="p">(</span><span class="s">r'\w+@\w+\.\w+'</span><span class="p">)</span>
+re<span class="p">.</span><span class="f">compile</span><span class="p">(</span><span class="s">r'\d{3}-\d{3}-\d{4}'</span><span class="p">)</span>
+re<span class="p">.</span><span class="f">compile</span><span class="p">(</span><span class="s">r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'</span><span class="p">)</span>
+re<span class="p">.</span><span class="f">compile</span><span class="p">(</span><span class="s">r'(\w+)=(.+)'</span><span class="p">)</span></code></pre>
+        </div>
+        <div class="code-block">
+          <div class="code-label"><div class="dot" style="background: var(--green)"></div> readable-regex</div>
+          <pre><code>regex<span class="p">.</span><span class="f">words</span><span class="p">.</span><span class="f">then</span><span class="p">(</span><span class="s">'@'</span><span class="p">).</span><span class="f">words</span><span class="p">.</span><span class="f">then</span><span class="p">(</span><span class="s">'.'</span><span class="p">).</span><span class="f">words</span>
+regex<span class="p">.</span><span class="f">digit</span><span class="p">.</span><span class="f">exactly</span><span class="p">(</span><span class="n">3</span><span class="p">).</span><span class="f">then</span><span class="p">(</span><span class="s">'-'</span><span class="p">).</span><span class="f">digit</span><span class="p">.</span><span class="f">exactly</span><span class="p">(</span><span class="n">3</span><span class="p">).</span><span class="f">then</span><span class="p">(</span><span class="s">'-'</span><span class="p">).</span><span class="f">digit</span><span class="p">.</span><span class="f">exactly</span><span class="p">(</span><span class="n">4</span><span class="p">)</span>
+regex<span class="p">.</span><span class="f">digit</span><span class="p">.</span><span class="f">between</span><span class="p">(</span><span class="n">1</span><span class="p">,</span><span class="n">3</span><span class="p">).</span><span class="f">then</span><span class="p">(</span><span class="s">'.'</span><span class="p">).</span><span class="f">digit</span><span class="p">.</span><span class="f">between</span><span class="p">(</span><span class="n">1</span><span class="p">,</span><span class="n">3</span><span class="p">).</span><span class="f">then</span><span class="p">(</span><span class="s">'.'</span><span class="p">)&hellip;</span>
+regex<span class="p">.</span><span class="f">capture</span><span class="p">(</span>regex<span class="p">.</span><span class="f">words</span><span class="p">).</span><span class="f">then</span><span class="p">(</span><span class="s">'='</span><span class="p">).</span><span class="f">capture</span><span class="p">(</span>regex<span class="p">.</span><span class="f">any_chars</span><span class="p">)</span></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Examples -->
+
+    <section class="example">
+      <div class="example-header">
+        <div class="example-number">1</div>
+        <h2>Email pattern</h2>
+      </div>
+      <p class="example-desc">Plurals make common patterns extremely concise &mdash; <code class="f">words</code> already means "one or more word characters".</p>
+      <div class="code-block">
+        <div class="code-label"><div class="dot"></div> Python</div>
+        <pre><code><span class="k">from</span> readable_regex <span class="k">import</span> regex
+
+<span class="v">email</span> <span class="o">=</span> regex<span class="p">.</span><span class="f">words</span><span class="p">.</span><span class="f">then</span><span class="p">(</span><span class="s">'@'</span><span class="p">).</span><span class="f">words</span><span class="p">.</span><span class="f">then</span><span class="p">(</span><span class="s">'.'</span><span class="p">).</span><span class="f">words</span>
+
+email<span class="p">.</span><span class="f">test</span><span class="p">(</span><span class="s">"user@example.com"</span><span class="p">)</span>   <span class="c"># True</span>
+email<span class="p">.</span><span class="f">test</span><span class="p">(</span><span class="s">"bad@@address"</span><span class="p">)</span>      <span class="c"># False</span></code></pre>
+        <div class="output-block">
+          <div class="label">Pattern</div>
+          <span class="val">\w+@\w+\.\w+</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="example">
+      <div class="example-header">
+        <div class="example-number">2</div>
+        <h2>Phone number</h2>
+      </div>
+      <p class="example-desc">Use <code class="f">digit</code> (singular) with <code class="f">exactly(n)</code> for fixed-width fields.</p>
+      <div class="code-block">
+        <div class="code-label"><div class="dot"></div> Python</div>
+        <pre><code><span class="v">phone</span> <span class="o">=</span> <span class="p">(</span>
+    regex
+    <span class="p">.</span><span class="f">digit</span><span class="p">.</span><span class="f">exactly</span><span class="p">(</span><span class="n">3</span><span class="p">).</span><span class="f">then</span><span class="p">(</span><span class="s">'-'</span><span class="p">)</span>
+    <span class="p">.</span><span class="f">digit</span><span class="p">.</span><span class="f">exactly</span><span class="p">(</span><span class="n">3</span><span class="p">).</span><span class="f">then</span><span class="p">(</span><span class="s">'-'</span><span class="p">)</span>
+    <span class="p">.</span><span class="f">digit</span><span class="p">.</span><span class="f">exactly</span><span class="p">(</span><span class="n">4</span><span class="p">)</span>
+<span class="p">)</span>
+
+phone<span class="p">.</span><span class="f">test</span><span class="p">(</span><span class="s">"123-456-7890"</span><span class="p">)</span>  <span class="c"># True</span>
+phone<span class="p">.</span><span class="f">test</span><span class="p">(</span><span class="s">"12-34-5678"</span><span class="p">)</span>    <span class="c"># False</span></code></pre>
+        <div class="output-block">
+          <div class="label">Pattern</div>
+          <span class="val">\d{3}\-\d{3}\-\d{4}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="example">
+      <div class="example-header">
+        <div class="example-number">3</div>
+        <h2>IP address</h2>
+      </div>
+      <p class="example-desc">Use <code class="f">between(min, max)</code> for variable-width segments.</p>
+      <div class="code-block">
+        <div class="code-label"><div class="dot"></div> Python</div>
+        <pre><code><span class="v">ip</span> <span class="o">=</span> <span class="p">(</span>
+    regex
+    <span class="p">.</span><span class="f">digit</span><span class="p">.</span><span class="f">between</span><span class="p">(</span><span class="n">1</span><span class="p">,</span> <span class="n">3</span><span class="p">).</span><span class="f">then</span><span class="p">(</span><span class="s">'.'</span><span class="p">)</span>
+    <span class="p">.</span><span class="f">digit</span><span class="p">.</span><span class="f">between</span><span class="p">(</span><span class="n">1</span><span class="p">,</span> <span class="n">3</span><span class="p">).</span><span class="f">then</span><span class="p">(</span><span class="s">'.'</span><span class="p">)</span>
+    <span class="p">.</span><span class="f">digit</span><span class="p">.</span><span class="f">between</span><span class="p">(</span><span class="n">1</span><span class="p">,</span> <span class="n">3</span><span class="p">).</span><span class="f">then</span><span class="p">(</span><span class="s">'.'</span><span class="p">)</span>
+    <span class="p">.</span><span class="f">digit</span><span class="p">.</span><span class="f">between</span><span class="p">(</span><span class="n">1</span><span class="p">,</span> <span class="n">3</span><span class="p">)</span>
+<span class="p">)</span>
+
+ip<span class="p">.</span><span class="f">test</span><span class="p">(</span><span class="s">"192.168.1.1"</span><span class="p">)</span>   <span class="c"># True</span>
+ip<span class="p">.</span><span class="f">test</span><span class="p">(</span><span class="s">"not.an.ip"</span><span class="p">)</span>     <span class="c"># False</span></code></pre>
+        <div class="output-block">
+          <div class="label">Pattern</div>
+          <span class="val">\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="example">
+      <div class="example-header">
+        <div class="example-number">4</div>
+        <h2>Extract all numbers</h2>
+      </div>
+      <p class="example-desc">Terminal methods like <code class="f">find_all()</code> execute the pattern directly.</p>
+      <div class="code-block">
+        <div class="code-label"><div class="dot"></div> Python</div>
+        <pre><code><span class="v">text</span> <span class="o">=</span> <span class="s">"Order #42 has 3 items totaling $129"</span>
+regex<span class="p">.</span><span class="f">digits</span><span class="p">.</span><span class="f">find_all</span><span class="p">(</span><span class="v">text</span><span class="p">)</span></code></pre>
+        <div class="output-block">
+          <div class="label">Result</div>
+          <span class="val">['42', '3', '129']</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="example">
+      <div class="example-header">
+        <div class="example-number">5</div>
+        <h2>Capturing groups</h2>
+      </div>
+      <p class="example-desc">Wrap a sub-builder in <code class="f">capture()</code> to create a capturing group.</p>
+      <div class="code-block">
+        <div class="code-label"><div class="dot"></div> Python</div>
+        <pre><code><span class="v">kv</span> <span class="o">=</span> regex<span class="p">.</span><span class="f">capture</span><span class="p">(</span>regex<span class="p">.</span><span class="f">words</span><span class="p">).</span><span class="f">then</span><span class="p">(</span><span class="s">'='</span><span class="p">).</span><span class="f">capture</span><span class="p">(</span>regex<span class="p">.</span><span class="f">any_chars</span><span class="p">)</span>
+
+<span class="v">m</span> <span class="o">=</span> kv<span class="p">.</span><span class="f">search</span><span class="p">(</span><span class="s">"color=blue"</span><span class="p">)</span>
+m<span class="p">.</span><span class="f">group</span><span class="p">(</span><span class="n">1</span><span class="p">)</span>  <span class="c"># 'color'</span>
+m<span class="p">.</span><span class="f">group</span><span class="p">(</span><span class="n">2</span><span class="p">)</span>  <span class="c"># 'blue'</span></code></pre>
+        <div class="output-block">
+          <div class="label">Pattern</div>
+          <span class="val">(\w+)=(.+)</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="example">
+      <div class="example-header">
+        <div class="example-number">6</div>
+        <h2>Case-insensitive &amp; flags</h2>
+      </div>
+      <p class="example-desc">Flags are properties that chain naturally at the end.</p>
+      <div class="code-block">
+        <div class="code-label"><div class="dot"></div> Python</div>
+        <pre><code><span class="v">greeting</span> <span class="o">=</span> regex<span class="p">.</span><span class="f">starts_with</span><span class="p">(</span><span class="s">'hello'</span><span class="p">).</span><span class="f">ignore_case</span>
+
+greeting<span class="p">.</span><span class="f">test</span><span class="p">(</span><span class="s">"HELLO world"</span><span class="p">)</span>  <span class="c"># True</span>
+greeting<span class="p">.</span><span class="f">test</span><span class="p">(</span><span class="s">"Hello World"</span><span class="p">)</span>  <span class="c"># True</span>
+greeting<span class="p">.</span><span class="f">test</span><span class="p">(</span><span class="s">"hey there"</span><span class="p">)</span>    <span class="c"># False</span></code></pre>
+      </div>
+    </section>
+
+    <section class="example">
+      <div class="example-header">
+        <div class="example-number">7</div>
+        <h2>Search &amp; replace</h2>
+      </div>
+      <p class="example-desc">Use <code class="f">replace(text, repl)</code> as a terminal method.</p>
+      <div class="code-block">
+        <div class="code-label"><div class="dot"></div> Python</div>
+        <pre><code><span class="v">text</span> <span class="o">=</span> <span class="s">"My SSN is 123-45-6789 and PIN is 9876"</span>
+regex<span class="p">.</span><span class="f">digits</span><span class="p">.</span><span class="f">replace</span><span class="p">(</span><span class="v">text</span><span class="p">,</span> <span class="s">"***"</span><span class="p">)</span></code></pre>
+        <div class="output-block">
+          <div class="label">Result</div>
+          <span class="val">'My SSN is ***-***-*** and PIN is ***'</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="example">
+      <div class="example-header">
+        <div class="example-number">8</div>
+        <h2>Splitting text</h2>
+      </div>
+      <p class="example-desc">Split on a comma followed by optional whitespace.</p>
+      <div class="code-block">
+        <div class="code-label"><div class="dot"></div> Python</div>
+        <pre><code>regex<span class="p">.</span><span class="f">then</span><span class="p">(</span><span class="s">','</span><span class="p">).</span><span class="f">whitespace</span><span class="p">.</span><span class="f">zero_or_more</span><span class="p">.</span><span class="f">split</span><span class="p">(</span><span class="s">"apple, banana,cherry, date"</span><span class="p">)</span></code></pre>
+        <div class="output-block">
+          <div class="label">Result</div>
+          <span class="val">['apple', 'banana', 'cherry', 'date']</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="example">
+      <div class="example-header">
+        <div class="example-number">9</div>
+        <h2>Negated classes with exclude</h2>
+      </div>
+      <p class="example-desc">Use <code class="f">exclude</code> as a property to access negated character classes.</p>
+      <div class="code-block">
+        <div class="code-label"><div class="dot"></div> Python</div>
+        <pre><code><span class="c"># Match runs of non-digit characters</span>
+regex<span class="p">.</span><span class="f">exclude</span><span class="p">.</span><span class="f">digits</span><span class="p">.</span><span class="f">find_all</span><span class="p">(</span><span class="s">"a1b2c3"</span><span class="p">)</span>
+
+<span class="c"># Words without underscores</span>
+regex<span class="p">.</span><span class="f">words</span><span class="p">.</span><span class="f">excluding</span><span class="p">(</span><span class="s">'_'</span><span class="p">)</span></code></pre>
+        <div class="output-block">
+          <div class="label">Results</div>
+          <span class="val">['a', 'b', 'c']</span><br>
+          Pattern: <span class="val">[^\W_]+</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="example">
+      <div class="example-header">
+        <div class="example-number">10</div>
+        <h2>Immutable builder &mdash; safe reuse</h2>
+      </div>
+      <p class="example-desc">Every method returns a new builder. Branch freely from any saved pattern.</p>
+      <div class="code-block">
+        <div class="code-label"><div class="dot"></div> Python</div>
+        <pre><code><span class="v">base</span> <span class="o">=</span> regex<span class="p">.</span><span class="f">starts_with</span><span class="p">(</span><span class="s">'LOG-'</span><span class="p">)</span>
+
+<span class="v">errors</span> <span class="o">=</span> base<span class="p">.</span><span class="f">then</span><span class="p">(</span><span class="s">'ERROR'</span><span class="p">).</span><span class="f">any_chars</span>
+<span class="v">warns</span>  <span class="o">=</span> base<span class="p">.</span><span class="f">then</span><span class="p">(</span><span class="s">'WARN'</span><span class="p">).</span><span class="f">any_chars</span>
+
+errors<span class="p">.</span><span class="f">test</span><span class="p">(</span><span class="s">"LOG-ERROR disk full"</span><span class="p">)</span>   <span class="c"># True</span>
+warns<span class="p">.</span><span class="f">test</span><span class="p">(</span><span class="s">"LOG-WARN low memory"</span><span class="p">)</span>   <span class="c"># True</span>
+errors<span class="p">.</span><span class="f">test</span><span class="p">(</span><span class="s">"LOG-INFO started"</span><span class="p">)</span>    <span class="c"># False</span>
+
+<span class="c"># base is unchanged:</span>
+base<span class="p">.</span><span class="f">pattern</span>  <span class="c"># '^LOG\\-'</span></code></pre>
+      </div>
+    </section>
+
+    <section class="example">
+      <div class="example-header">
+        <div class="example-number">11</div>
+        <h2>Debug with .pattern</h2>
+      </div>
+      <p class="example-desc">Inspect the raw regex at any point in the chain.</p>
+      <div class="code-block">
+        <div class="code-label"><div class="dot"></div> Python</div>
+        <pre><code><span class="v">p</span> <span class="o">=</span> regex<span class="p">.</span><span class="f">starts_with</span><span class="p">().</span><span class="f">words</span><span class="p">.</span><span class="f">then</span><span class="p">(</span><span class="s">'@'</span><span class="p">).</span><span class="f">words</span><span class="p">.</span><span class="f">ends_with</span><span class="p">()</span>
+
+p<span class="p">.</span><span class="f">pattern</span>    <span class="c"># '^\w+@\w+$'</span>
+p<span class="p">.</span><span class="f">compile</span><span class="p">()</span>  <span class="c"># re.Pattern object (cached)</span></code></pre>
+      </div>
+    </section>
+
+    <footer>
+      readable-regex &middot; Zero dependencies &middot; Python 3.10+
+    </footer>
+
+  </div>
+</body>
+</html>
